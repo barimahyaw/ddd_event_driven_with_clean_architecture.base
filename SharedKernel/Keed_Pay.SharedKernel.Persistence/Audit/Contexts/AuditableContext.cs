@@ -15,7 +15,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
 
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
-    public virtual async Task<int> SaveChangesAsync(long userId)
+    public virtual async Task<int> SaveChangesAsync(Guid userId)
     {
         var auditEntries = OnBeforeSaveChanges(userId);
         var result = await base.SaveChangesAsync();
@@ -23,7 +23,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
         return result;
     }
 
-    private List<AuditEntry> OnBeforeSaveChanges(long userId)
+    private List<AuditEntry> OnBeforeSaveChanges(Guid userId)
     {
         ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();
@@ -108,18 +108,15 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        var userId = _currentUserService.UserId;
-        if (_currentUserService.UserId == 0) userId = 1;
-
-        var userIdValidationResult = UserId.Validate(userId);
+    {   
+        var userIdValidationResult = UserId.Validate(_currentUserService.UserId);
         if (!userIdValidationResult.Succeeded)
         {
-            _logger.LogError($"Save Changes operation failed because user Id: {userId}");
+            _logger.LogError($"Save Changes operation failed because of invalid user Id: {_currentUserService.UserId}");
             return 0;
         }
 
-        var userIdResult = UserId.Create(userId);
+        var userIdResult = UserId.Create(_currentUserService.UserId);
 
         foreach (var entry in ChangeTracker.Entries<EntityExtra>().ToList())
         {
@@ -139,7 +136,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
                     break;
             }
         }
-        if (_currentUserService.UserId == 0)
+        if (_currentUserService.UserId == Guid.Empty)
             return await base.SaveChangesAsync(cancellationToken);
         return await SaveChangesAsync(_currentUserService.UserId);
     }

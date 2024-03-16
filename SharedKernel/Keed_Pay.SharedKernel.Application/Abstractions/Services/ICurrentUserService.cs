@@ -1,8 +1,10 @@
-﻿namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Services;
+﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
+
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Services;
 
 public interface ICurrentUserService
 {
-    long UserId { get; }
+    Guid UserId { get; }
     List<KeyValuePair<string, string>> Claims { get; }
     bool IsInRole(string role);
     bool IsInAnyRole(List<string> role);

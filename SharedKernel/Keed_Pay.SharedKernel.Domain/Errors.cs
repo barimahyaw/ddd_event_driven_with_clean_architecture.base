@@ -68,4 +68,12 @@ internal sealed record Errors
         internal static Error CurrencyNullOrEmpty => new("currency_null_or_empty", "Currency cannot be null or empty");
         internal static Error InvalidAmount => new("amount_negative", "Invalid amount. Amount cannot be zero nor negative");
     }
+
+    internal sealed record DateOfBirth
+    {
+        internal static Error DateOfBirthNullOrEmpty => new("date_of_birth_null_or_empty", "Date of birth cannot be null or empty");
+        internal static Error DateOfBirthInFuture => new("date_of_birth_in_future", "Date of birth cannot be in the future");
+        internal static Error DateOfBirthLessThan18Years => new("date_of_birth_less_than_18_years", "Date of birth cannot be less than 18 years");
+        internal static Error DateOfBirthInvalidFormat => new("date_of_birth_invalid_format", "Date of birth is invalid format");
+    }
 }

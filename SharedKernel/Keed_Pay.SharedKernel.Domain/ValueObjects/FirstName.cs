@@ -3,12 +3,9 @@ using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
 
-public sealed class FirstName : ValueObject
+public sealed class FirstName(string value) : ValueObject
 {
-    public string Value { get; private set; } = default!;
-
-    private FirstName(string value) =>
-        Value = value;
+    public string Value { get; private set; } = value;
 
     internal const int MaxLength = 50;
 

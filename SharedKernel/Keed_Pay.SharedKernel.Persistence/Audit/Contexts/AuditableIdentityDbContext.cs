@@ -12,7 +12,7 @@ public class AuditableIdentityDbContext<TUser, TRole, TKey>(DbContextOptions opt
 {
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
-    public virtual async Task<int> SaveChangesAsync(long userId)
+    public virtual async Task<int> SaveChangesAsync(Guid userId)
     {
         var auditEntries = OnBeforeSaveChanges(userId);
         var result = await base.SaveChangesAsync();
@@ -20,7 +20,7 @@ public class AuditableIdentityDbContext<TUser, TRole, TKey>(DbContextOptions opt
         return result;
     }
 
-    public List<AuditEntry> OnBeforeSaveChanges(long userId)
+    public List<AuditEntry> OnBeforeSaveChanges(Guid userId)
     {
         ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();

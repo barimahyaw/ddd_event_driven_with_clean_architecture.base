@@ -3,22 +3,19 @@ using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
 
-public class UserId : ValueObject
+public class UserId(Guid id) : ValueObject
 {
-    public long Id { get; private set; }
+    public Guid Id { get; private set; } = id;
 
-    private UserId(long id) =>
-        Id = id;
-
-    public static Result Validate(long id)
+    public static Result Validate(Guid id)
     {
-        if (id == 0)
+        if (id == Guid.Empty)
             return Result.Fail(Errors.UserErrors.UserIdEmpty);
 
         return Result.Success();
     }
 
-    public static UserId Create(long id)
+    public static UserId Create(Guid id)
         => new(id);
 
     public override IEnumerable<object> GetAtomicValues()

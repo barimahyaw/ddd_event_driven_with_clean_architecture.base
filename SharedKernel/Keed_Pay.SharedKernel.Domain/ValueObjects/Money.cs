@@ -3,16 +3,10 @@ using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
 
-public class Money : ValueObject
+public class Money(string currency, decimal amount) : ValueObject
 {
-    public decimal Amount { get; private set; }
-    public string Currency { get; private set; } = default!;
-
-    private Money(string currency, decimal amount) 
-    { 
-        Currency = currency;
-        Amount = amount;
-    }
+    public decimal Amount { get; private set; } = amount;
+    public string Currency { get; private set; } = currency;
 
     public static Result Validate(string currency, decimal amount)
     {

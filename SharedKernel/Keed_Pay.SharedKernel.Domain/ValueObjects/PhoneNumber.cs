@@ -3,16 +3,10 @@ using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
 
-public sealed class PhoneNumber : ValueObject
+public sealed class PhoneNumber(string code, string value) : ValueObject
 {
-    public string Value { get; private set; } = default!;
-    public string CountryCode { get; private set; } = default!;
-
-    private PhoneNumber(string code, string value)
-    {
-        CountryCode = code;
-        Value = value;
-    }
+    public string Value { get; private set; } = value;
+    public string CountryCode { get; private set; } = code;
 
     internal const int MaxLength = 50;
     internal const int MinLength = 6;

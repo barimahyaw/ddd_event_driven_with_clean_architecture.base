@@ -4,12 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
 
-public sealed partial class GhanaCardPersonalIdentificationNumber : ValueObject
+public sealed partial class GhanaCardPersonalIdentificationNumber(string value) : ValueObject
 {
-    public string Value { get; private set; } = default!;
-
-    private GhanaCardPersonalIdentificationNumber(string value) =>
-        Value = value;
+    public string Value { get; private set; } = value;
 
     internal const int Length = 15;
 

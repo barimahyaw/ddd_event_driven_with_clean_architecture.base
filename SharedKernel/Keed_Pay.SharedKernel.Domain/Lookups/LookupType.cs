@@ -5,7 +5,7 @@ namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Lookups;
 
 public class LookupType : EntityExtra
 {
-    public long Id { get; private set; }
+    public Guid Id { get; private set; }
     [Required, MaxLength(150)]
     public string TypeName { get; private set; } = null!;
     [Required, MaxLength(255)]
