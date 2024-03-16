@@ -1,0 +1,54 @@
+﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
+
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
+
+public class Money : ValueObject
+{
+    public decimal Amount { get; private set; }
+    public string Currency { get; private set; } = default!;
+
+    private Money(string currency, decimal amount) 
+    { 
+        Currency = currency;
+        Amount = amount;
+    }
+
+    public static Result Validate(string currency, decimal amount)
+    {
+        if(string.IsNullOrWhiteSpace(currency))
+            return Result.Fail(Errors.MoneyErrors.CurrencyNullOrEmpty);
+        if(amount <= 0)
+            return Result.Fail(Errors.MoneyErrors.InvalidAmount);
+
+        return Result.Success();
+    }
+
+    public override string ToString() => $"{Currency} {Amount}";
+
+    public static Money Create(string currency, decimal amount)
+        => new(currency, amount);
+
+    // validate top up/ charge money
+    public Result ValidateAddSubtract(string currency, decimal amount)
+    {
+        var validationResult = Validate(currency, amount);
+        if (!validationResult.Succeeded) return validationResult;
+
+        if (currency != Currency) return Result.Fail(Errors.MoneyErrors.CurrencyMismatch);
+
+        return Result.Success();
+    }
+
+    // top up money
+    public Money Add(Money money) => new(Currency, Amount + money.Amount);
+
+    // subtract money
+    public Money Subtract(Money money) => new(Currency, Amount - money.Amount);
+
+    public override IEnumerable<object> GetAtomicValues()
+    {
+        yield return Currency;
+        yield return Amount;
+    }
+}
