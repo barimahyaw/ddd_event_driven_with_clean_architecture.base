@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>Keed Digital Clean Architecture Persistence Shared</Title>
+    <Title>Domain Driven Design, Event Deriven with Clean Architecture Persistence Shared</Title>
 	<Version>1.0.0</Version>
   </PropertyGroup>
 
