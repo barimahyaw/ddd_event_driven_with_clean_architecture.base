@@ -12,7 +12,8 @@ public static class DependencyInjection
         this DbContextOptionsBuilder options,
         IConfiguration configuration)
         => options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING")
-            ?? configuration.GetConnectionString("CONNECTION_STRING"));
+            ?? configuration.GetConnectionString("CONNECTION_STRING"))
+        .UseSnakeCaseNamingConvention();
 
     public static IServiceCollection AddDatabaseConfiguration<TDbContext>(
         this IServiceCollection services,
