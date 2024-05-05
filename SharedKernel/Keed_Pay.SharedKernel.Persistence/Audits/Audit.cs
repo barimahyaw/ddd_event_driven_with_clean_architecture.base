@@ -1,6 +1,6 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
 
-namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audit;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
 
 public sealed class Audit : Entity
 {

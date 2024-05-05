@@ -1,18 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Services;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
 
-namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audit.Contexts;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits.Contexts;
 
-public class AuditableContext<T>(DbContextOptions options, ICurrentUserService currentUserService, ILogger<T> logger)
-    : DbContext(options) where T : DbContext
+public class AuditableIdentityDbContext<TUser, TRole, TKey>(DbContextOptions options)
+    : IdentityDbContext<TUser, TRole, TKey>(options)
+    where TUser : IdentityUser<TKey>
+    where TRole : IdentityRole<TKey>
+    where TKey : IEquatable<TKey>
 {
-    private readonly ICurrentUserService _currentUserService = currentUserService;
-    private readonly ILogger<T> _logger = logger;
-
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
     public virtual async Task<int> SaveChangesAsync(Guid userId)
@@ -23,7 +20,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
         return result;
     }
 
-    private List<AuditEntry> OnBeforeSaveChanges(Guid userId)
+    public List<AuditEntry> OnBeforeSaveChanges(Guid userId)
     {
         ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();
@@ -37,7 +34,9 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
                 TableName = entry.Entity.GetType().Name,
                 UserId = userId
             };
+
             auditEntries.Add(auditEntry);
+
             foreach (var property in entry.Properties)
             {
                 if (property.IsTemporary)
@@ -77,10 +76,12 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
                 }
             }
         }
+
         foreach (var auditEntry in auditEntries.Where(_ => !_.HasTemporaryProperties))
         {
             AuditTrail.Add(auditEntry.ToAudit());
         }
+
         return auditEntries.Where(_ => _.HasTemporaryProperties).ToList();
     }
 
@@ -105,39 +106,5 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
             AuditTrail.Add(auditEntry.ToAudit());
         }
         return SaveChangesAsync();
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {   
-        var userIdValidationResult = UserId.Validate(_currentUserService.UserId);
-        if (!userIdValidationResult.Succeeded)
-        {
-            _logger.LogError($"Save Changes operation failed because of invalid user Id: {_currentUserService.UserId}");
-            return 0;
-        }
-
-        var userIdResult = UserId.Create(_currentUserService.UserId);
-
-        foreach (var entry in ChangeTracker.Entries<EntityExtra>().ToList())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedAtUtc = entry.Entity.CreatedAtUtc != DateTime.MinValue
-                        ? entry.Entity.CreatedAtUtc
-                        : DateTime.UtcNow;
-                    entry.Entity.CreatedUserId = userIdResult;
-                    entry.Entity.IsActive = true;
-                    break;
-
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedAtUtc = DateTime.UtcNow;
-                    entry.Entity.LastModifiedUserId = userIdResult;
-                    break;
-            }
-        }
-        if (_currentUserService.UserId == Guid.Empty)
-            return await base.SaveChangesAsync(cancellationToken);
-        return await SaveChangesAsync(_currentUserService.UserId);
     }
 }

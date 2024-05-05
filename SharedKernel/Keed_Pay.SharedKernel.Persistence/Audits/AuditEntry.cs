@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Newtonsoft.Json;
 
-namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audit;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
 
 public sealed class AuditEntry(EntityEntry entry)
 {

@@ -4,11 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
 
-internal class LookupTypeConfiguration : IEntityTypeConfiguration<LookupType>
+internal class LookupTypeConfiguration<T>(T project) : IEntityTypeConfiguration<LookupType>
+     where T : IProjectStringValue
 {
+    public T Project { get; } = project;
+
     public void Configure(EntityTypeBuilder<LookupType> builder)
     {
-        //builder.ToTable("LookupTypes");
+        builder.ToTable("lookup_types", Project.Name);
 
         builder.HasKey(c => c.Id);
 
