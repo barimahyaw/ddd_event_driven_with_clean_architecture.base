@@ -19,6 +19,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Data;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Services.NotificationService;
 
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure;
@@ -27,8 +28,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedKernelExternalServices(this IServiceCollection services)
     {
-        services.AddScoped<ICurrentUserService, CurrentUserService>()
+        services.AddScoped<ICurrentUserService, CurrentUserService>()            
             .TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+        services.AddScoped<IEmailNotificationService, EmailNotificationService>();
+        services.AddScoped<ISMSNotificationService, SMSNotificationService>();
         return services;
     }
 

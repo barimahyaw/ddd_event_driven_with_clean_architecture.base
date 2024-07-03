@@ -1,4 +1,7 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Data;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Notifications.Repositories;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits.Contexts;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Notifications;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.OutBox.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -51,4 +54,8 @@ public static class DependencyInjection
 
         return services;
     }
+
+    public static IServiceCollection AddNotificationRepository<T>(this IServiceCollection services)
+        where T : AuditableContext<T>
+        => services.AddScoped<INotificationRepository, NotificationRepository<T>>();
 }
