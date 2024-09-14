@@ -34,6 +34,7 @@ internal class EmailNotificationService
         var errorMessage = Environment.GetEnvironmentVariable("NOT_DELIVER_EMAIL_COMMENT") ?? _emailSettings.DeliveryDecision.Reason;
 
         var notification = Notification.Create(email, message, subject);
+        notification.SetNotificationType(Domain.Notifications.Enums.NotificationType.Email);
 
         try
         {

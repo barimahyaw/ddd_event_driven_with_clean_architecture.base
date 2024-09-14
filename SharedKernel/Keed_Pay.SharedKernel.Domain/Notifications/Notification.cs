@@ -39,4 +39,7 @@ public class Notification
         IsDelivered = false;
         DeliveryError = error;
     }
+
+    public void SetNotificationType(NotificationType type)
+       => NotificationType = type;
 }
