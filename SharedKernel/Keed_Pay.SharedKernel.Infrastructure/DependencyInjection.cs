@@ -20,6 +20,12 @@ using System.Security.Claims;
 using System.Text;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Data;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Services.NotificationService;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure;
@@ -173,5 +179,87 @@ public static class DependencyInjection
             IgnoreAntiforgeryToken = true,
         });
         return app;
+    }
+
+    public static IServiceCollection AddSMTPServerConfiguration
+      (this IServiceCollection services,
+      IConfiguration configuration,
+      string configurationName)
+    {
+        // var emailConfig = configuration.GetSection("EmailConfiguration");
+        var emailConfig = configuration.GetSection(configurationName);
+        services.Configure<EmailSettings>(emailConfig);
+        return services;
+    }
+
+    public static IServiceCollection AddOpenTelemetryConfiguration
+        (this IServiceCollection services, WebApplicationBuilder builder, string serviceName)
+    {
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(serviceName))
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation();
+
+                metrics.AddOtlpExporter();
+            })
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddHttpClientInstrumentation()
+                    .AddAspNetCoreInstrumentation()
+                    .AddHangfireInstrumentation()
+                    .AddSqlClientInstrumentation(o => o.SetDbStatementForText = true)
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddSource(MassTransit.Logging.DiagnosticHeaders.DefaultListenerName);
+
+                tracing.AddOtlpExporter();
+            });
+
+        builder.Logging.AddOpenTelemetry(logging => logging.AddOtlpExporter());
+
+        return services;
+    }
+
+    public static IServiceCollection AddGRPCServerConfiguration(this IServiceCollection services)
+    {
+        services.AddGrpc();
+        services.AddGrpcReflection();
+        services.AddGrpcHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy());
+
+        return services;
+    }
+
+    public static WebApplication AddGRPCClientServiceConfiguration<T>(this WebApplication app)
+        where T : class
+    {
+        app.MapGrpcService<T>();
+        app.MapGrpcHealthChecksService();
+        app.MapGet("/", () => "pong");
+
+        return app;
+    }
+
+    public static IServiceCollection AddGrpcClientConfiguration<T>(this IServiceCollection services, string baseUrl)
+        where T : class
+    {
+        var notificationEndpoint = Environment.GetEnvironmentVariable(baseUrl)
+                    ?? throw new ArgumentNullException(baseUrl);
+
+        services.AddGrpcClient<T>(opt =>
+        {
+            opt.Address = new Uri(notificationEndpoint);
+        }).ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            return new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+        });
+
+        return services;
     }
 }
