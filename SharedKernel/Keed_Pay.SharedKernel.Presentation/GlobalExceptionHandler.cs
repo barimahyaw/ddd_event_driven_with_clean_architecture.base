@@ -16,6 +16,8 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     {
         _logger.LogError(exception, "Exception occurred: {message}", exception.Message);
 
+        SentrySdk.CaptureException(exception);
+
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
         var problemDetails = new ProblemDetails

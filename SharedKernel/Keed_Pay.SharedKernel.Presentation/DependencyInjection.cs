@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -24,11 +25,14 @@ public static class DependencyInjection
         return services;
     }
 
-    public static WebApplicationBuilder AddSerilogConfiguration(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddSerilogConfiguration(this WebApplicationBuilder builder, IConfiguration configuration)
     {
-        builder.Host.UseSerilog((context, configuration) =>
-            configuration.ReadFrom.Configuration(context.Configuration));
-
+        var seqEndpoint = configuration["SEQ_URL"] ?? Environment.GetEnvironmentVariable("SEQ_URL");
+        builder.Host.UseSerilog((context, cfg) =>
+        {
+            cfg.ReadFrom.Configuration(context.Configuration);
+            if (!string.IsNullOrWhiteSpace(seqEndpoint)) cfg.WriteTo.Seq(seqEndpoint);
+        });
         return builder;
     }
 

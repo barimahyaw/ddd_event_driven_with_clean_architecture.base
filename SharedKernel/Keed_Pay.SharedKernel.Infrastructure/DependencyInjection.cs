@@ -262,4 +262,15 @@ public static class DependencyInjection
 
         return services;
     }
+
+    public static IServiceCollection AddGlitchTipConfiguration(this IServiceCollection services, IConfiguration config)
+    {
+        var dsn = Environment.GetEnvironmentVariable("GLITCHTIP_DSN")
+            ?? config["GLITCHTIP_DSN"]
+            ?? throw new ArgumentNullException("GLITCHTIP_DSN");
+
+        SentrySdk.Init(opt => opt.Dsn = dsn);
+
+        return services;
+    }
 }
