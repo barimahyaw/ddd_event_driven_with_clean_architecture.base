@@ -1,15 +1,14 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Notifications.Repositories;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Notifications;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits.Contexts;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Notifications;
 
-internal sealed class NotificationRepository<T>(T dbContext) 
+internal sealed class NotificationRepository<P>(SharedDbContext<P> dbContext) 
     : INotificationRepository
-    where T : AuditableContext<T>    
+    where P : IProjectStringValue
 {
-    private readonly T _dbContext = dbContext;
-
     public async Task AddAsync(Notification notification)
-        => await _dbContext.Set<Notification>().AddAsync(notification);
+        => await dbContext.Set<Notification>().AddAsync(notification);
 }

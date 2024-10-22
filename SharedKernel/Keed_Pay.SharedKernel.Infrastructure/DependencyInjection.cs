@@ -26,6 +26,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
 
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure;
@@ -56,7 +57,7 @@ public static class DependencyInjection
             return multiplexer.GetDatabase();
         });
 
-        services.AddScoped<ICacheManager, MemoryCacheManager>();
+        services.AddScoped<ICacheManager, DistributedCacheManager>();
 
         return services;
     }
@@ -137,8 +138,8 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddHangfireConfiguration<T>(this IServiceCollection services, IConfiguration configuration, string prefix = default!)
-        where T : DbContext
+    public static IServiceCollection AddHangfireConfiguration<P>(this IServiceCollection services, IConfiguration configuration, string prefix = default!)
+        where P : IProjectStringValue
     {
         var options = new RedisStorageOptions
         {
@@ -162,7 +163,7 @@ public static class DependencyInjection
 
         services.AddHangfireServer();
 
-        services.AddScoped<IOutBoxMessagesProcessingJob, OutBoxMessagesProcessingJob<T>>();
+        services.AddScoped<IOutBoxMessagesProcessingJob, OutBoxMessagesProcessingJob<P>>();
 
         return services;
     }

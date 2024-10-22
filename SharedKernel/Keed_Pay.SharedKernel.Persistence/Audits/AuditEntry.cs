@@ -7,6 +7,7 @@ public sealed class AuditEntry(EntityEntry entry)
 {
     public EntityEntry Entry { get; } = entry;
     public Guid UserId { get; set; }
+    public string Project { get; set; } = default!;
     public string TableName { get; set; } = null!;
     public Dictionary<string, object> KeyValues { get; } = [];
     public Dictionary<string, object> OldValues { get; } = [];
@@ -20,6 +21,7 @@ public sealed class AuditEntry(EntityEntry entry)
     {
         var audit = Audit.Create(
             UserId,
+            Project,
             AuditType.ToString(),
             TableName,
             DateTime.UtcNow,

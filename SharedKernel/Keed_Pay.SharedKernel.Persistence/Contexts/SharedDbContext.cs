@@ -1,29 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Services;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.ValueObjects;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
 
-namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits.Contexts;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
 
-public class AuditableContext<T>(DbContextOptions options, ICurrentUserService currentUserService, ILogger<T> logger)
-    : DbContext(options) where T : DbContext
+public class SharedDbContext<P>(DbContextOptions options, P project)
+    : DbContext(options) where P : IProjectStringValue
 {
-    private readonly ICurrentUserService _currentUserService = currentUserService;
-    private readonly ILogger<T> _logger = logger;
-
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
-    public virtual async Task<int> SaveChangesAsync(Guid userId)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var auditEntries = OnBeforeSaveChanges(userId);
-        var result = await base.SaveChangesAsync();
-        await OnAfterSaveChanges(auditEntries);
-        return result;
+        modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration<P>(project));
+        modelBuilder.ApplyConfiguration(new OutboxConfiguration<P>(project));
+        modelBuilder.ApplyConfiguration(new AuditTrailConfiguration<P>(project)); 
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration<P>(project));
+        base.OnModelCreating(modelBuilder);
     }
 
-    private List<AuditEntry> OnBeforeSaveChanges(Guid userId)
+    public List<AuditEntry> OnBeforeSaveChanges(Guid userId)
     {
         ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();
@@ -34,6 +29,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
 
             var auditEntry = new AuditEntry(entry)
             {
+                Project = project.Name,
                 TableName = entry.Entity.GetType().Name,
                 UserId = userId
             };
@@ -84,7 +80,7 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
         return auditEntries.Where(_ => _.HasTemporaryProperties).ToList();
     }
 
-    private Task OnAfterSaveChanges(List<AuditEntry> auditEntries)
+    public Task OnAfterSaveChanges(List<AuditEntry> auditEntries)
     {
         if (auditEntries == null || auditEntries.Count == 0)
             return Task.CompletedTask;
@@ -105,39 +101,5 @@ public class AuditableContext<T>(DbContextOptions options, ICurrentUserService c
             AuditTrail.Add(auditEntry.ToAudit());
         }
         return SaveChangesAsync();
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {   
-        var userIdValidationResult = UserId.Validate(_currentUserService.UserId);
-        if (!userIdValidationResult.Succeeded)
-        {
-            _logger.LogError($"Save Changes operation failed because of invalid user Id: {_currentUserService.UserId}");
-            return 0;
-        }
-
-        var userIdResult = UserId.Create(_currentUserService.UserId);
-
-        foreach (var entry in ChangeTracker.Entries<EntityExtra>().ToList())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedAtUtc = entry.Entity.CreatedAtUtc != DateTime.MinValue
-                        ? entry.Entity.CreatedAtUtc
-                        : DateTime.UtcNow;
-                    entry.Entity.CreatedUserId = userIdResult;
-                    entry.Entity.IsActive = true;
-                    break;
-
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedAtUtc = DateTime.UtcNow;
-                    entry.Entity.LastModifiedUserId = userIdResult;
-                    break;
-            }
-        }
-        if (_currentUserService.UserId == Guid.Empty)
-            return await base.SaveChangesAsync(cancellationToken);
-        return await SaveChangesAsync(_currentUserService.UserId);
     }
 }

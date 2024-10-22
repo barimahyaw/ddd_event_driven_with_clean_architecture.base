@@ -17,6 +17,9 @@ public class PollyPolicy<T> where T : class
                 {
                     // Log the exception here
                     logger.LogError(exception, failDesc);
+
+                    // push exception details to sentry/glitch tip
+                    SentrySdk.CaptureException(exception);
                 });
 
         return policy;
