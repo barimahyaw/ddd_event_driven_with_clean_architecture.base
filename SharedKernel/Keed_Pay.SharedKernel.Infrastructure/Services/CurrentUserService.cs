@@ -11,14 +11,14 @@ public class CurrentUserService : ICurrentUserService
     {
         _contextAccessor = httpContextAccessor;
         var userIdString = httpContextAccessor.HttpContext?.User?.Claims.FirstOrDefault(claims => claims.Type == ClaimTypes.NameIdentifier)?.Value;
-        if (Guid.TryParse(userIdString, out var userId))
+        if (Ulid.TryParse(userIdString, out var userId))
             UserId = userId;
         Claims = httpContextAccessor.HttpContext?.User.Claims.AsEnumerable()
             .Select(item => new KeyValuePair<string, string>(item.Type, item.Value)).ToList() ?? new List<KeyValuePair<string, string>>();
         UserName = httpContextAccessor.HttpContext?.User?.Claims.FirstOrDefault(claims => claims.Type == ClaimTypes.Email)?.Value;
     }
 
-    public Guid UserId { get; }
+    public Ulid UserId { get; }
 
     public List<KeyValuePair<string, string>> Claims { get; }
 

@@ -4,8 +4,8 @@ namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
 
 public sealed class Audit : Entity
 {
-    public Guid Id { get; private set; }
-    public Guid UserId { get; private set; }
+    public Ulid Id { get; private set; }
+    public Ulid UserId { get; private set; }
     public string? Project { get; set; }
     public string? Type { get; private set; }
     public string? TableName { get; private set; }
@@ -17,7 +17,7 @@ public sealed class Audit : Entity
 
     private Audit() { }
 
-    private Audit(Guid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
+    private Audit(Ulid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
     {
         UserId = userId;
         Project = project;
@@ -30,6 +30,6 @@ public sealed class Audit : Entity
         PrimaryKey = primaryKey;
     }
 
-    public static Audit Create(Guid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
+    public static Audit Create(Ulid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
         => new(userId, project, type, tableName, dateTime, oldValues, newValues, affectedColumns, primaryKey);
 }

@@ -6,7 +6,7 @@ namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
 public sealed class AuditEntry(EntityEntry entry)
 {
     public EntityEntry Entry { get; } = entry;
-    public Guid UserId { get; set; }
+    public Ulid UserId { get; set; }
     public string Project { get; set; } = default!;
     public string TableName { get; set; } = null!;
     public Dictionary<string, object> KeyValues { get; } = [];

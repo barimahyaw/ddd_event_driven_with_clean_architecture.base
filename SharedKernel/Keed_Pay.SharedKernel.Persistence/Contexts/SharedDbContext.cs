@@ -13,12 +13,12 @@ public class SharedDbContext<P>(DbContextOptions options, P project)
     {
         modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration<P>(project));
         modelBuilder.ApplyConfiguration(new OutboxConfiguration<P>(project));
-        modelBuilder.ApplyConfiguration(new AuditTrailConfiguration<P>(project)); 
+        modelBuilder.ApplyConfiguration(new AuditTrailConfiguration<P>(project));
         modelBuilder.ApplyConfiguration(new NotificationConfiguration<P>(project));
         base.OnModelCreating(modelBuilder);
     }
 
-    public List<AuditEntry> OnBeforeSaveChanges(Guid userId)
+    public List<AuditEntry> OnBeforeSaveChanges(Ulid userId)
     {
         ChangeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();

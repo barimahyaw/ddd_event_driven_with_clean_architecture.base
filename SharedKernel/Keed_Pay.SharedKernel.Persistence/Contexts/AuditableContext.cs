@@ -20,7 +20,7 @@ public class AuditableContext<T, P>
 
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
-    public virtual async Task<int> SaveChangesAsync(Guid userId)
+    public virtual async Task<int> SaveChangesAsync(Ulid userId)
     {
         var auditEntries = sharedDbContext.OnBeforeSaveChanges(userId);
         var result = await base.SaveChangesAsync();
@@ -57,7 +57,7 @@ public class AuditableContext<T, P>
                     break;
             }
         }
-        if (_currentUserService.UserId == Guid.Empty)
+        if (_currentUserService.UserId == Ulid.Empty || _currentUserService.UserId == default)
             return await base.SaveChangesAsync(cancellationToken);
         return await SaveChangesAsync(_currentUserService.UserId);
     }

@@ -15,7 +15,7 @@ public class AuditableIdentityDbContext<TUser, TRole, TKey, P>(DbContextOptions 
 {
     public DbSet<Audit> AuditTrail { get; set; } = null!;
 
-    public virtual async Task<int> SaveChangesAsync(Guid userId)
+    public virtual async Task<int> SaveChangesAsync(Ulid userId)
     {
         var auditEntries = sharedDbContext.OnBeforeSaveChanges(userId);
         var result = await base.SaveChangesAsync();
