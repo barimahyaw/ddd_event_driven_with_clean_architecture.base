@@ -6,7 +6,6 @@ public sealed class Audit : Entity
 {
     public Ulid Id { get; private set; }
     public Ulid UserId { get; private set; }
-    public string? Project { get; set; }
     public string? Type { get; private set; }
     public string? TableName { get; private set; }
     public DateTime DateTime { get; private set; }
@@ -17,10 +16,10 @@ public sealed class Audit : Entity
 
     private Audit() { }
 
-    private Audit(Ulid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
+    private Audit(Ulid userId, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
     {
+        Id = Ulid.NewUlid();
         UserId = userId;
-        Project = project;
         Type = type;
         TableName = tableName;
         DateTime = dateTime;
@@ -30,6 +29,6 @@ public sealed class Audit : Entity
         PrimaryKey = primaryKey;
     }
 
-    public static Audit Create(Ulid userId, string project, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
-        => new(userId, project, type, tableName, dateTime, oldValues, newValues, affectedColumns, primaryKey);
+    public static Audit Create(Ulid userId, string type, string tableName, DateTime dateTime, string? oldValues, string? newValues, string? affectedColumns, string primaryKey)
+        => new(userId, type, tableName, dateTime, oldValues, newValues, affectedColumns, primaryKey);
 }

@@ -2,13 +2,10 @@
 using Hangfire.Redis.StackExchange;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Services;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Results;
-using Keed_Digital.SharedKernel.Infrastructure.BackgroundJobs;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Cache;
-using Keed_Digital.SharedKernel.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,7 +23,9 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.BackgroundJobs;
+using Microsoft.EntityFrameworkCore;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Services;
 
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure;
@@ -35,7 +34,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSharedKernelExternalServices(this IServiceCollection services)
     {
-        services.AddScoped<ICurrentUserService, CurrentUserService>()            
+        services.AddScoped<ICurrentUserService, CurrentUserService>()
             .TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddScoped<IEmailNotificationService, EmailNotificationService>();
         services.AddScoped<ISMSNotificationService, SMSNotificationService>();
@@ -98,17 +97,17 @@ public static class DependencyInjection
                     }
                     else
                     {
-                        #if DEBUG
-                            c.NoResult();
-                            c.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                            c.Response.ContentType = "text/plain";
-                            return c.Response.WriteAsync(c.Exception.ToString());
-                        #else
+#if DEBUG
+                        c.NoResult();
+                        c.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        c.Response.ContentType = "text/plain";
+                        return c.Response.WriteAsync(c.Exception.ToString());
+#else
                             c.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                             c.Response.ContentType = "application/json";
                             var result = JsonConvert.SerializeObject(Result.Fail("An unhandled error has occurred."));
                             return c.Response.WriteAsync(result);
-                        #endif
+#endif
                     }
                 },
                 OnChallenge = context =>
@@ -138,8 +137,8 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddHangfireConfiguration<P>(this IServiceCollection services, IConfiguration configuration, string prefix = default!)
-        where P : IProjectStringValue
+    public static IServiceCollection AddHangfireConfiguration<TDbContext>(this IServiceCollection services, IConfiguration configuration, string prefix = default!)
+        where TDbContext : DbContext
     {
         var options = new RedisStorageOptions
         {
@@ -149,8 +148,8 @@ public static class DependencyInjection
             ExpiryCheckInterval = TimeSpan.FromSeconds(30),
         };
 
-        if (!string.IsNullOrWhiteSpace(prefix)) options.Prefix = prefix;       
-       
+        if (!string.IsNullOrWhiteSpace(prefix)) options.Prefix = prefix;
+
         var connectionString = Environment.GetEnvironmentVariable("CACHE_CONNECTION_STRING")
             ?? configuration["CACHE_CONNECTION_STRING"]
             ?? throw new ArgumentNullException("CACHE_CONNECTION_STRING");
@@ -163,7 +162,7 @@ public static class DependencyInjection
 
         services.AddHangfireServer();
 
-        services.AddScoped<IOutBoxMessagesProcessingJob, OutBoxMessagesProcessingJob<P>>();
+        services.AddScoped<IOutBoxMessagesProcessingJob, OutBoxMessagesProcessingJob<TDbContext>>();
 
         return services;
     }

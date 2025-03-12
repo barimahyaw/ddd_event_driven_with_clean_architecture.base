@@ -1,14 +1,10 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Newtonsoft.Json;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.OutBox.Interceptors;
 
-public sealed class ConvertDomainEventsToOutboxMessagesInterceptor<P>(SharedDbContext<P> sharedDbContext) 
-    : SaveChangesInterceptor
-    where P : IProjectStringValue
+public sealed class ConvertDomainEventsToOutboxMessagesInterceptor : SaveChangesInterceptor
 {
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
@@ -32,6 +28,7 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor<P>(SharedDbCo
             })
             .Select(domainEvent => new OutboxMessage
             {
+                Id = Ulid.NewUlid(),
                 OccurredOnUtc = DateTime.UtcNow,
                 Type = domainEvent.GetType().FullName!,
                 Assembly = domainEvent.GetType().Assembly.FullName!,
@@ -44,8 +41,7 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor<P>(SharedDbCo
             })
             .ToList();
 
-        sharedDbContext.Set<OutboxMessage>().AddRange(outboxMessages);
-        sharedDbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }

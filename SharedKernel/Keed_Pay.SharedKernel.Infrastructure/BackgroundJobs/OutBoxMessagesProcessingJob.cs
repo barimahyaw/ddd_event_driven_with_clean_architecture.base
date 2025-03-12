@@ -1,21 +1,19 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Primitives.Factory;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Resilience;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.OutBox;
-using Keed_Digital.SharedKernel.Infrastructure.Resilience;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Polly;
 
-namespace Keed_Digital.SharedKernel.Infrastructure.BackgroundJobs;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.BackgroundJobs;
 
-public class OutBoxMessagesProcessingJob<P>(
-    ILogger<OutBoxMessagesProcessingJob<P>> logger,
-    SharedDbContext<P> dbContext,
+public class OutBoxMessagesProcessingJob<TDbContext>(
+    ILogger<OutBoxMessagesProcessingJob<TDbContext>> logger,
+    TDbContext dbContext,
     IPublisher publisher) : IOutBoxMessagesProcessingJob
-    where P : IProjectStringValue
+    where TDbContext : DbContext
 {
     public async Task Execute(CancellationToken cancellationToken = default)
     {
@@ -34,7 +32,7 @@ public class OutBoxMessagesProcessingJob<P>(
 
             var errorMessage = $"Failed to process outbox message with ID: {message.Id} of TYPE: {message.Type}";
 
-            var retryPolicy = PollyPolicy<OutBoxMessagesProcessingJob<P>>.Retry(logger, errorMessage);
+            var retryPolicy = PollyPolicy<OutBoxMessagesProcessingJob<TDbContext>>.Retry(logger, errorMessage);
 
             message.ProcessingAttempts++;
             message.ProcessLastAttemptOnUtc = DateTime.UtcNow;

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace Keed_Digital.SharedKernel.Infrastructure.Services;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Services;
 
 public class CurrentUserService : ICurrentUserService
 {

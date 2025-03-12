@@ -1,35 +1,22 @@
-﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Audits;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
 
-public class SharedDbContext<P>(DbContextOptions options, P project)
-    : DbContext(options) where P : IProjectStringValue
+public class AuditHelper
 {
-    public DbSet<Audit> AuditTrail { get; set; } = null!;
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public static List<AuditEntry> OnBeforeSaveChanges(ChangeTracker changeTracker, Ulid userId, DbSet<Audit> auditTrail)
     {
-        modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration<P>(project));
-        modelBuilder.ApplyConfiguration(new OutboxConfiguration<P>(project));
-        modelBuilder.ApplyConfiguration(new AuditTrailConfiguration<P>(project));
-        modelBuilder.ApplyConfiguration(new NotificationConfiguration<P>(project));
-        base.OnModelCreating(modelBuilder);
-    }
-
-    public List<AuditEntry> OnBeforeSaveChanges(Ulid userId)
-    {
-        ChangeTracker.DetectChanges();
+        changeTracker.DetectChanges();
         var auditEntries = new List<AuditEntry>();
-        foreach (var entry in ChangeTracker.Entries())
+        foreach (var entry in changeTracker.Entries())
         {
             if (entry.Entity is Audit || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
                 continue;
 
             var auditEntry = new AuditEntry(entry)
             {
-                Project = project.Name,
                 TableName = entry.Entity.GetType().Name,
                 UserId = userId
             };
@@ -75,15 +62,15 @@ public class SharedDbContext<P>(DbContextOptions options, P project)
         }
         foreach (var auditEntry in auditEntries.Where(_ => !_.HasTemporaryProperties))
         {
-            AuditTrail.Add(auditEntry.ToAudit());
+            auditTrail.Add(auditEntry.ToAudit());
         }
         return auditEntries.Where(_ => _.HasTemporaryProperties).ToList();
     }
 
-    public Task OnAfterSaveChanges(List<AuditEntry> auditEntries)
+    public static async Task OnAfterSaveChanges(ChangeTracker changeTracker, List<AuditEntry> auditEntries, DbSet<Audit> auditTrail)
     {
         if (auditEntries == null || auditEntries.Count == 0)
-            return Task.CompletedTask;
+            return;
 
         foreach (var auditEntry in auditEntries)
         {
@@ -98,8 +85,8 @@ public class SharedDbContext<P>(DbContextOptions options, P project)
                     auditEntry.NewValues[prop.Metadata.Name] = prop.CurrentValue!;
                 }
             }
-            AuditTrail.Add(auditEntry.ToAudit());
+            auditTrail.Add(auditEntry.ToAudit());
         }
-        return SaveChangesAsync();
+        await changeTracker.Context.SaveChangesAsync();
     }
 }

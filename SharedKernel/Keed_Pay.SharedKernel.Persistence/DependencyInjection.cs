@@ -1,9 +1,7 @@
 ﻿using DDD_Event_Driven_Clean_Architecture.SharedKernel.Application.Abstractions.Data;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Notifications.Repositories;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Contexts;
-using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Notifications;
 using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.OutBox.Interceptors;
+using DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,13 +14,12 @@ public static class DependencyInjection
         string connectionString)
         => options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
 
-    public static IServiceCollection AddDatabaseConfiguration<TDbContext, P>(
+    public static IServiceCollection AddDatabaseConfiguration<TDbContext>(
         this IServiceCollection services,
         IConfiguration configuration)
         where TDbContext : DbContext
-        where P : IProjectStringValue
     {
-        services.AddScoped<ConvertDomainEventsToOutboxMessagesInterceptor<P>>();
+        services.AddScoped<ConvertDomainEventsToOutboxMessagesInterceptor>();
 
         var cs = Environment.GetEnvironmentVariable("CONNECTION_STRING")
             ?? configuration.GetConnectionString("CONNECTION_STRING")
@@ -33,21 +30,9 @@ public static class DependencyInjection
             {                
                 optionBuilder.ConfigureDbContextOptions(cs);
 
-                var interceptor = sp.GetService<ConvertDomainEventsToOutboxMessagesInterceptor<P>>();
+                var interceptor = sp.GetService<ConvertDomainEventsToOutboxMessagesInterceptor>();
                 optionBuilder.AddInterceptors(interceptor!);
             });
-
-        return services;
-    }
-
-    public static IServiceCollection AddSharedDatabaseConfiguration<P>(this IServiceCollection services, string connectionString)
-        where P : IProjectStringValue
-        => services.AddDbContext<SharedDbContext<P>>(options => options.ConfigureDbContextOptions(connectionString));
-
-    public static IServiceCollection AddUnitOfWork<T>(this IServiceCollection services)
-        where T : DbContext
-    {
-        services.AddScoped<IUnitOfWork, UnitOfWork<T>>();
 
         return services;
     }
@@ -61,7 +46,15 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddNotificationRepository<P>(this IServiceCollection services)
-        where P : IProjectStringValue
-        => services.AddScoped<INotificationRepository, NotificationRepository<P>>();
+    public static IServiceCollection AddUnitOfWork<TDbContext>(this IServiceCollection services)
+        where TDbContext : DbContext
+    {
+        services.AddScoped<IUnitOfWork, UnitOfWork<TDbContext>>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddNotificationRepository<TDbContext>(this IServiceCollection services)
+        where TDbContext : DbContext
+        => services.AddScoped<INotificationRepository, NotificationRepository<TDbContext>>();
 }

@@ -18,6 +18,9 @@ public class UserId(Ulid id) : ValueObject
     public static UserId Create(Ulid id)
         => new(id);
 
+    public static implicit operator Ulid(UserId self) => self.Id;
+    public static implicit operator UserId(Ulid id) => new(id);
+
     public override IEnumerable<object> GetAtomicValues()
     {
         yield return Id;

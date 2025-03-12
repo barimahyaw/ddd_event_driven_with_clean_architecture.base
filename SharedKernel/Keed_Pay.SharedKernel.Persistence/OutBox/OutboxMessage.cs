@@ -4,7 +4,7 @@ namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.OutBox;
 
 public class OutboxMessage : Entity
 {
-    public long Id { get; set; }
+    public Ulid Id { get; set; }
     public string Type { get; set; } = default!;
     public string Assembly { get; set; } = default!;    
     public string Content { get; set; } = default!;

@@ -1,7 +1,7 @@
 ﻿using Hangfire.Annotations;
 using Hangfire.Dashboard;
 
-namespace Keed_Digital.SharedKernel.Infrastructure.BackgroundJobs;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.BackgroundJobs;
 
 public sealed class HanfireAuthorizationFilter : IDashboardAuthorizationFilter
 {

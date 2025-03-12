@@ -2,7 +2,7 @@
 using Polly;
 using Polly.Retry;
 
-namespace Keed_Digital.SharedKernel.Infrastructure.Resilience;
+namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Infrastructure.Resilience;
 
 public class PollyPolicy<T> where T : class
 {

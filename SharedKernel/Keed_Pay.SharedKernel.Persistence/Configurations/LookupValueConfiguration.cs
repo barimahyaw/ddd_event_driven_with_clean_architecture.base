@@ -4,14 +4,14 @@ using DDD_Event_Driven_Clean_Architecture.SharedKernel.Domain.Lookups;
 
 namespace DDD_Event_Driven_Clean_Architecture.SharedKernel.Persistence.Configurations;
 
-internal class LookupValueConfiguration<T>(T project) : IEntityTypeConfiguration<LookupValue>
-    where T : IProjectStringValue
+internal class LookupValueConfiguration<S>(S project) : IEntityTypeConfiguration<LookupValue>
+    where S : ISchemaStringValue
 {
-    public T Project { get; } = project;
+    public S Schema { get; } = project;
 
     public void Configure(EntityTypeBuilder<LookupValue> builder)
     {
-        builder.ToTable("lookup_values", Project.Name);
+        builder.ToTable("lookup_values", Schema.Name);
 
         builder.HasKey(c => c.Id);
 
